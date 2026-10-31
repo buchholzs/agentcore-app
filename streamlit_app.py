@@ -49,7 +49,7 @@ if not st.user.is_logged_in:
 # Nach erfolgreichem Login:
 st.sidebar.write(f"Eingeloggt als: {st.user.email}")
 if st.button("Logout"):
-    st.user.logout()  # Loggt den Nutzer aus und löscht die Session-Daten
+    st.logout()
 
 st.title("🤖 AWS AgentCore Runtime")
 st.write("Stelle eine Frage an deinen Agenten:")
