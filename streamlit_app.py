@@ -51,7 +51,13 @@ st.sidebar.write(f"Eingeloggt als: {st.user.email}")
 if st.button("Logout"):
     st.session_state.clear() # Clear all session data
     st.session_state.page = "login" # Set the page to ‘login’ after logout
+ # Clear the sidebar and hide it
+    st.sidebar.empty()  # Empty the sidebar to hide it
+    st.write("You have been logged out.")
 
+    # Rerun the app and go to the login page
+    st.rerun()  # # Rerun the app to reset the session state
+    
 st.title("🤖 AWS AgentCore Runtime + Streamlit")
 st.write("Stelle eine Frage an deinen Agenten:")
 
