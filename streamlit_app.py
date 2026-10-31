@@ -36,8 +36,20 @@ def _extract_runtime_text(response):
     return "".join(parts) if parts else raw
 
 # Konfiguration (kann auch über Umgebungsvariablen gesteuert werden)
-AWS_REGION = os.getenv("AWS_REGION", "eu-central-1")
-AGENT_RUNTIME_ARN = os.getenv("AGENT_RUNTIME_ARN") or os.getenv("AGENT_ARN", "arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/deine-agent-id")
+AWS_REGION = st.secrets["AWS_REGION"]
+AGENT_RUNTIME_ARN = st.secrets["AGENT_RUNTIME_ARN"]
+
+# Prüfen, ob der Nutzer angemeldet ist
+if not st.user.is_logged_in:
+    st.title("Bitte anmelden")
+    if st.button("Login mit AWS Cognito"):
+        st.login("cognito")  # Verweist auf den Block [auth.cognito] in den Secrets
+    st.stop()
+
+# Nach erfolgreichem Login:
+st.sidebar.write(f"Eingeloggt als: {st.user.email}")
+if st.button("Logout"):
+    st.logout()
 
 st.title("🤖 AWS AgentCore Runtime + Streamlit")
 st.write("Stelle eine Frage an deinen Agenten:")
