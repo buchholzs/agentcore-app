@@ -50,7 +50,7 @@ if not st.user.is_logged_in:
 st.sidebar.write(f"Eingeloggt als: {st.user.email}")
 if st.button("Logout"):
     # Alle Schlüssel im session_state löschen
-    for key in list(st.keys()):
+    for key in list(st.session_state.keys()):
         del st.session_state[key]
     
     # Optional: Streamlit-eigenen Login-Status zurücksetzen
