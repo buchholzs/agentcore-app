@@ -49,14 +49,9 @@ if not st.user.is_logged_in:
 # Nach erfolgreichem Login:
 st.sidebar.write(f"Eingeloggt als: {st.user.email}")
 if st.button("Logout"):
-    # Clear the sidebar and hide it
-    st.sidebar.empty()  # Empty the sidebar to hide it
-    st.write("You have been logged out.")
+    st.user.logout()  # Loggt den Nutzer aus und löscht die Session-Daten
 
-    # Rerun the app and go to the login page
-    st.rerun()  # # Rerun the app to reset the session state
-
-st.title("🤖 AWS AgentCore Runtime + Streamlit")
+st.title("🤖 AWS AgentCore Runtime")
 st.write("Stelle eine Frage an deinen Agenten:")
 
 # Initialisiere den Bedrock-AgentCore-Client (oder den entsprechenden boto3-Client)
