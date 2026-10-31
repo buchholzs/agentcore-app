@@ -84,6 +84,15 @@ if user_input := st.chat_input("Was möchtest du tun?"):
     with st.chat_message("user"):
         st.markdown(user_input)
 
+    conversation = "\n".join(
+        f"{'Nutzer' if message['role'] == 'user' else 'Assistent'}: {message['content']}"
+        for message in st.session_state.messages
+    )
+    agent_prompt = (
+        "Beziehe den bisherigen Gesprächsverlauf in deine Antwort ein.\n\n"
+        f"{conversation}"
+    )
+
     # Antwort vom AgentCore abrufen
     with st.chat_message("assistant"):
         with st.spinner("Agent arbeitet..."):
@@ -92,7 +101,7 @@ if user_input := st.chat_input("Was möchtest du tun?"):
                 # Je nach Konfiguration wird hier Invoke / Payload übergeben
                 response = client.invoke_agent_runtime(
                     agentRuntimeArn=AGENT_RUNTIME_ARN,
-                    payload=json.dumps({"prompt": user_input}).encode("utf-8"),
+                    payload=json.dumps({"prompt": agent_prompt}).encode("utf-8"),
                     contentType="application/json",
                 )
                 
