@@ -49,7 +49,15 @@ if not st.user.is_logged_in:
 # Nach erfolgreichem Login:
 st.sidebar.write(f"Eingeloggt als: {st.user.email}")
 if st.button("Logout"):
+    # Alle Schlüssel im session_state löschen
+    for key in list(st.keys()):
+        del st.session_state[key]
+    
+    # Optional: Streamlit-eigenen Login-Status zurücksetzen
     st.logout()
+    
+    # Seite neu laden, um die Ansicht zu aktualisieren
+    st.rerun()
 
 st.title("🤖 AWS AgentCore Runtime")
 st.write("Stelle eine Frage an deinen Agenten:")
