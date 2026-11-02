@@ -88,10 +88,7 @@ if user_input := st.chat_input("Was möchtest du tun?"):
         f"{'Nutzer' if message['role'] == 'user' else 'Assistent'}: {message['content']}"
         for message in st.session_state.messages
     )
-    agent_prompt = (
-        "Beziehe den bisherigen Gesprächsverlauf in deine Antwort ein.\n\n"
-        f"{conversation}"
-    )
+    agent_prompt = conversation
 
     # Antwort vom AgentCore abrufen
     with st.chat_message("assistant"):
