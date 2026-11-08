@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 import boto3
 import streamlit as st
 
@@ -62,6 +63,14 @@ if st.button("Logout"):
 st.title("🤖 AWS AgentCore Runtime")
 st.write("Stelle eine Frage an deinen Agenten:")
 
+actor_id = st.user.get("sub")
+if not actor_id:
+    st.error("Die stabile Nutzer-ID (OIDC-Claim 'sub') fehlt.")
+    st.stop()
+
+if "runtime_session_id" not in st.session_state:
+    st.session_state.runtime_session_id = str(uuid.uuid4())
+
 # Initialisiere den Bedrock-AgentCore-Client (oder den entsprechenden boto3-Client)
 @st.cache_resource
 def get_client():
@@ -84,11 +93,7 @@ if user_input := st.chat_input("Was möchtest du tun?"):
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    conversation = "\n".join(
-        f"{'Nutzer' if message['role'] == 'user' else 'Assistent'}: {message['content']}"
-        for message in st.session_state.messages
-    )
-    agent_prompt = conversation
+    agent_prompt = user_input
 
     # Antwort vom AgentCore abrufen
     with st.chat_message("assistant"):
@@ -98,7 +103,11 @@ if user_input := st.chat_input("Was möchtest du tun?"):
                 # Je nach Konfiguration wird hier Invoke / Payload übergeben
                 response = client.invoke_agent_runtime(
                     agentRuntimeArn=AGENT_RUNTIME_ARN,
-                    payload=json.dumps({"prompt": agent_prompt}).encode("utf-8"),
+                    runtimeSessionId=st.session_state.runtime_session_id,
+                    runtimeUserId=actor_id,
+                    payload=json.dumps(
+                        {"prompt": agent_prompt, "actorId": actor_id}
+                    ).encode("utf-8"),
                     contentType="application/json",
                 )
                 
