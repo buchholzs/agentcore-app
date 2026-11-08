@@ -48,7 +48,31 @@ if not st.user.is_logged_in:
     st.stop()
 
 # Nach erfolgreichem Login:
-st.sidebar.write(f"Eingeloggt als: {st.user.email}")
+user_name = st.user.get("name")
+if not user_name:
+    user_name = " ".join(
+        part
+        for part in (
+            st.user.get("given_name"),
+            st.user.get("family_name"),
+        )
+        if part
+    )
+if not user_name:
+    user_name = (
+        st.user.get("preferred_username")
+        or st.user.get("nickname")
+        or st.user.get("username")
+        or st.user.get("cognito:username")
+        or st.user.email
+    )
+
+st.sidebar.write(f"Eingeloggt als: {user_name}")
+if user_name == st.user.email:
+    st.sidebar.caption(
+        "Cognito hat keinen Namens-Claim übermittelt. Prüfe das Namensattribut "
+        "und dessen Leseberechtigung im Cognito-App-Client."
+    )
 if st.button("Logout"):
     # Alle Schlüssel im session_state löschen
     for key in list(st.session_state.keys()):
@@ -93,7 +117,10 @@ if user_input := st.chat_input("Was möchtest du tun?"):
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    agent_prompt = user_input
+    agent_prompt = (
+        f"Der angemeldete Nutzer heißt {user_name}. "
+        f"Sprich ihn bei Bedarf mit seinem Namen an.\n\n{user_input}"
+    )
 
     # Antwort vom AgentCore abrufen
     with st.chat_message("assistant"):
@@ -106,7 +133,11 @@ if user_input := st.chat_input("Was möchtest du tun?"):
                     runtimeSessionId=st.session_state.runtime_session_id,
                     runtimeUserId=actor_id,
                     payload=json.dumps(
-                        {"prompt": agent_prompt, "actorId": actor_id}
+                        {
+                            "prompt": agent_prompt,
+                            "actorId": actor_id,
+                            "userName": user_name,
+                        }
                     ).encode("utf-8"),
                     contentType="application/json",
                 )
