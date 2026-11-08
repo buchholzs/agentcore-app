@@ -48,24 +48,14 @@ if not st.user.is_logged_in:
     st.stop()
 
 # Nach erfolgreichem Login:
-user_name = st.user.get("name")
-if not user_name:
-    user_name = " ".join(
-        part
-        for part in (
-            st.user.get("given_name"),
-            st.user.get("family_name"),
-        )
-        if part
+user_name = " ".join(
+    part
+    for part in (
+        st.user.get("given_name"),
+        st.user.get("family_name"),
     )
-if not user_name:
-    user_name = (
-        st.user.get("preferred_username")
-        or st.user.get("nickname")
-        or st.user.get("username")
-        or st.user.get("cognito:username")
-        or st.user.email
-    )
+    if part
+)
 
 st.sidebar.write(f"Eingeloggt als: {user_name}")
 if user_name == st.user.email:
@@ -89,7 +79,7 @@ st.write("Stelle eine Frage an deinen Agenten:")
 
 actor_id = st.user.get("sub")
 if not actor_id:
-    st.error("Die stabile Nutzer-ID (OIDC-Claim 'sub') fehlt.")
+    st.error("Die Nutzer-ID (OIDC-Claim 'sub') fehlt.")
     st.stop()
 
 if "runtime_session_id" not in st.session_state:
