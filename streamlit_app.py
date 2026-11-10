@@ -1,8 +1,8 @@
 import json
-import os
 import uuid
-import boto3
 import streamlit as st
+
+from agentcore_client import AgentCoreClient
 
 
 def _extract_runtime_text(response):
@@ -41,7 +41,17 @@ AWS_REGION = st.secrets["AWS_REGION"]
 AGENT_RUNTIME_ARN = st.secrets["AGENT_RUNTIME_ARN"]
 
 # Prüfen, ob der Nutzer angemeldet ist
-if not st.user.is_logged_in:
+auth_config = st.secrets.get("auth", {})
+if not auth_config or "cognito" not in auth_config:
+    st.error(
+        "Die Cognito-Benutzeranmeldung ist nicht konfiguriert. "
+        "Ergänze [auth] und [auth.cognito] in .streamlit/secrets.toml "
+        "(siehe README.md). [agentcore_m2m] authentifiziert nur die App "
+        "gegenüber AgentCore und ersetzt keinen Benutzer-Login."
+    )
+    st.stop()
+
+if not st.user.get("is_logged_in", False):
     st.title("Bitte anmelden")
     if st.button("Login mit AWS Cognito"):
         st.login("cognito")  # Verweist auf den Block [auth.cognito] in den Secrets
@@ -85,12 +95,14 @@ if not actor_id:
 if "runtime_session_id" not in st.session_state:
     st.session_state.runtime_session_id = str(uuid.uuid4())
 
-# Initialisiere den Bedrock-AgentCore-Client (oder den entsprechenden boto3-Client)
-@st.cache_resource
 def get_client():
-    return boto3.client("bedrock-agentcore", region_name=AWS_REGION)
-
-client = get_client()
+    if "agentcore_client" not in st.session_state:
+        st.session_state.agentcore_client = AgentCoreClient(
+            region=AWS_REGION,
+            runtime_arn=AGENT_RUNTIME_ARN,
+            **dict(st.secrets["agentcore_m2m"]),
+        )
+    return st.session_state.agentcore_client
 
 # Chat-Verlauf initialisieren
 if "messages" not in st.session_state:
@@ -116,12 +128,8 @@ if user_input := st.chat_input("Was möchtest du tun?"):
     with st.chat_message("assistant"):
         with st.spinner("Agent arbeitet..."):
             try:
-                # Beispiel-Aufruf (anhand der AWS-Schnittstelle für AgentCore Runtime)
-                # Je nach Konfiguration wird hier Invoke / Payload übergeben
-                response = client.invoke_agent_runtime(
-                    agentRuntimeArn=AGENT_RUNTIME_ARN,
-                    runtimeSessionId=st.session_state.runtime_session_id,
-                    runtimeUserId=actor_id,
+                response = get_client().invoke_agent_runtime(
+                    runtime_session_id=st.session_state.runtime_session_id,
                     payload=json.dumps(
                         {
                             "prompt": agent_prompt,
@@ -129,7 +137,6 @@ if user_input := st.chat_input("Was möchtest du tun?"):
                             "userName": user_name,
                         }
                     ).encode("utf-8"),
-                    contentType="application/json",
                 )
                 
                 # Bedrock AgentCore liefert das Streaming-Body unter dem Schlüssel 'response'.
